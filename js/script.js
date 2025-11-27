@@ -1,0 +1,169 @@
+// 1. Configuração do Tailwind
+tailwind.config = {
+    darkMode: 'class',
+    theme: {
+        extend: {
+            colors: {
+                agro: {
+                    50: '#f2fbf5', 100: '#e0f6e6', 200: '#c3ebcd', 300: '#96d9a9',
+                    400: '#61bf7e', 500: '#3ba25d', 600: '#2b8448', 700: '#25693c',
+                    800: '#225333', 900: '#1d452c',
+                },
+                terra: { 500: '#8D6E63', 800: '#4E342E' }
+            },
+            animation: {
+                'grow-trunk': 'growTrunk 2s ease-out forwards',
+                'canopy-expand': 'expandCanopy 1.5s ease-out forwards',
+                'mango-drop': 'mangoDrop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+                growTrunk: { '0%': { height: '0%' }, '100%': { height: '100%' } },
+                expandCanopy: { '0%': { transform: 'scale(0)', opacity: '0' }, '80%': { transform: 'scale(1.1)', opacity: '1' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+                mangoDrop: { '0%': { transform: 'scale(0) translateY(-20px)', opacity: '0' }, '100%': { transform: 'scale(1) translateY(0)', opacity: '1' } },
+                float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } }
+            }
+        }
+    }
+};
+
+// 2. Loader e UI Logic
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const loader = document.getElementById('loader-screen');
+        if (loader) {
+            loader.style.opacity = '0';
+            loader.style.visibility = 'hidden';
+        }
+    }, 4800);
+});
+
+const themeToggle = document.getElementById('theme-toggle');
+if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+    });
+}
+
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+}
+
+// 3. Lógica do Mapa Avançado (Leaflet + Routing Machine)
+document.addEventListener('DOMContentLoaded', () => {
+    if (!document.getElementById('map')) return;
+
+    // Coordenadas da empresa (viveiro)
+    const companyCoords = [-14.7553516, 34.3792718]; 
+    const map = L.map('map').setView(companyCoords, 13);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        }).addTo(map);
+
+
+    // Ícone da Empresa
+    const companyIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    L.marker(companyCoords, {icon: companyIcon}).addTo(map)
+        .bindPopup('<b>Soplantas, Lda</b><br>Clique no botão para definir rota.')
+        .openPopup();
+
+    // Variáveis de Controle
+    let routingControl = null;
+    let watchId = null;
+    let lastUpdate = 0;
+
+    // Elementos do Botão
+    const btnGps = document.getElementById('btn-gps');
+    const textGps = document.getElementById('text-gps');
+    const iconGps = document.getElementById('icon-gps');
+
+    map.doubleClickZoom.disable();
+
+    function startNavigation() {
+        if (watchId !== null) {
+            alert("A navegação já está ativa.");
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            alert("Geolocalização não suportada.");
+            return;
+        }
+
+        // Feedback Visual
+        if(textGps) textGps.innerText = "A Localizar...";
+        if(iconGps) iconGps.classList.add('fa-spin');
+
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const now = Date.now();
+
+                // Atualizar botão na primeira leitura
+                if(textGps.innerText === "A Localizar...") {
+                    textGps.innerText = "Rota Ativa";
+                    iconGps.classList.remove('fa-spin');
+                    btnGps.classList.remove('bg-agro-600');
+                    btnGps.classList.add('bg-terra-500'); // Muda cor para Castanho/Terra
+                }
+
+                // Throttle de 5 segundos
+                if (now - lastUpdate < 5000 && routingControl !== null) {
+                    return;
+                }
+                lastUpdate = now;
+
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                const userPos = L.latLng(userLat, userLng);
+                const shopPos = L.latLng(companyCoords[0], companyCoords[1]);
+
+                if (!routingControl) {
+                    routingControl = L.Routing.control({
+                        waypoints: [userPos, shopPos],
+                        lineOptions: { 
+                            styles: [{color: '#2b8448', opacity: 0.8, weight: 6}] // Linha Verde Escura
+                        },
+                        createMarker: () => null, 
+                        addWaypoints: false,
+                        draggableWaypoints: false,
+                        fitSelectedRoutes: true,
+                        showAlternatives: false
+                    }).addTo(map);
+                } else {
+                    routingControl.setWaypoints([userPos, shopPos]);
+                }
+            },
+            (error) => {
+                console.error("Erro GPS:", error);
+                alert("Erro ao obter localização.");
+                if(textGps) textGps.innerText = "Tentar GPS Novamente";
+                if(iconGps) iconGps.classList.remove('fa-spin');
+                watchId = null;
+            },
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+        );
+    }
+
+    if(btnGps) {
+        btnGps.addEventListener('click', (e) => {
+            e.preventDefault();
+            startNavigation();
+        });
+    }
+    
+    // Manter duplo clique como backup
+    map.on('dblclick', startNavigation);
+});

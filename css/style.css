@@ -1,0 +1,138 @@
+/* Estilos do Loader - Mangueira */
+#loader-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: #f0fdf4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s ease-out, visibility 0.8s;
+}
+.dark #loader-screen {
+    background-color: #1d452c;
+}
+
+/* Mangueira CSS Art */
+.mangueira-container {
+    position: relative;
+    width: 200px;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.mangueira-trunk {
+    position: absolute;
+    bottom: 10px;
+    width: 20px;
+    height: 100px; /* Controlado pela animação */
+    background: linear-gradient(90deg, #5D4037, #795548);
+    border-radius: 5px;
+    z-index: 10;
+    transform-origin: bottom center;
+}
+.mangueira-trunk::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: -10px; right: -10px; height: 10px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 50%;
+    z-index: -1;
+}
+
+.mangueira-branch {
+    position: absolute;
+    bottom: 90%;
+    width: 12px; height: 50px;
+    background: linear-gradient(90deg, #5D4037, #795548);
+    transform-origin: bottom center;
+    border-radius: 5px;
+    z-index: 9;
+}
+.branch-left { left: -5px; transform: rotate(-30deg); }
+.branch-right { right: -5px; transform: rotate(30deg); }
+.branch-middle { left: 4px; height: 40px; transform: rotate(0deg); bottom: 95%; }
+
+.mangueira-canopy {
+    position: absolute;
+    bottom: 90px;
+    width: 180px; height: 140px;
+    background: radial-gradient(circle at 30% 30%, #4CAF50, #2E7D32);
+    border-radius: 50% 50% 40% 40%;
+    z-index: 20;
+    transform-origin: bottom center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+.mangueira-canopy::before {
+    content: ''; position: absolute; top: 10px; left: -20px; width: 100px; height: 100px;
+    background: #388E3C; border-radius: 50%; z-index: -1;
+}
+.mangueira-canopy::after {
+    content: ''; position: absolute; top: 20px; right: -15px; width: 90px; height: 90px;
+    background: #2E7D32; border-radius: 50%; z-index: -1;
+}
+
+.mango {
+    position: absolute;
+    width: 22px; height: 30px;
+    background: linear-gradient(135deg, #FFD54F 20%, #FF7043 80%);
+    border-radius: 50% 40% 60% 40% / 60% 40% 60% 40%;
+    z-index: 25;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    transform-origin: top center;
+}
+.mango::before {
+    content: ''; position: absolute; top: -4px; left: 50%; width: 2px; height: 4px; background: #3E2723;
+}
+.mango-1 { top: 30px; left: 40px; transform: rotate(15deg); }
+.mango-2 { top: 60px; right: 50px; transform: rotate(-10deg); }
+.mango-3 { top: 80px; left: 60px; transform: rotate(5deg); }
+.mango-4 { top: 40px; right: 30px; transform: rotate(-20deg); width: 18px; height: 26px;}
+
+/* Mapa e Header */
+#map {
+    height: 100%;
+    width: 100%;
+    z-index: 10;
+}
+
+.glass-header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+.dark .glass-header {
+    background: rgba(29, 69, 44, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Leaflet e Routing Machine - Dark Mode Fix */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    color: #333; /* Padrão */
+}
+.dark .leaflet-popup-content-wrapper, .dark .leaflet-popup-tip {
+    background: #1f2937;
+    color: #f3f4f6;
+    border: 1px solid #3ba25d;
+}
+.leaflet-routing-container {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+}
+.dark .leaflet-routing-container {
+    background-color: rgba(31, 41, 55, 0.95) !important;
+    color: white !important;
+    border: 1px solid #374151;
+}
+.dark .leaflet-routing-alt tr:hover {
+    background-color: #374151 !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #3ba25d; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #2b8448; }

@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-PT" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="img/logo.png" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soplantas Lda</title>
+    <meta name="description" content="Soplantas: Consultoria Soplantas, venda de mudas e projetos sustentáveis.">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-agro-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <div id="loader-screen">
+        <div class="mangueira-container">
+            <div class="w-32 h-3 bg-terra-500 rounded-full mb-0 z-10"></div>
+            
+            <div class="absolute bottom-3 w-full flex justify-center items-end">
+                <div class="mangueira-trunk animate-grow-trunk" style="height: 0%;">
+                    <div class="mangueira-branch branch-left"></div>
+                    <div class="mangueira-branch branch-middle"></div>
+                    <div class="mangueira-branch branch-right"></div>
+                </div>
+            </div>
+
+            <div class="mangueira-canopy opacity-0 animate-canopy-expand" style="animation-delay: 1.8s;">
+                <div class="mango mango-1 opacity-0 animate-mango-drop" style="animation-delay: 3.0s;"></div>
+                <div class="mango mango-2 opacity-0 animate-mango-drop" style="animation-delay: 3.2s;"></div>
+                <div class="mango mango-3 opacity-0 animate-mango-drop" style="animation-delay: 3.4s;"></div>
+                <div class="mango mango-4 opacity-0 animate-mango-drop" style="animation-delay: 3.6s;"></div>
+            </div>
+            
+            <p class="absolute -bottom-16 text-agro-700 dark:text-agro-300 font-bold tracking-widest animate-pulse">Semeando...</p>
+        </div>
+    </div>
+
+    <div id="error-page" class="hidden fixed inset-0 z-[60] bg-red-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 text-center">
+        <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-4"></i>
+        <h2 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">Algo deu errado!</h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">Não foi possível carregar o recurso solicitado.</p>
+        <button id="btn-error-back" class="px-6 py-2 bg-agro-600 text-white rounded-full hover:bg-agro-700 transition">
+            Voltar para Segurança
+        </button>
+    </div>
+
+    <header id="main-header" class="fixed top-0 left-0 w-full z-50 transition-all duration-300 glass-header shadow-sm">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="#" class="flex items-center space-x-2 group">
+                <div class="w-10 h-10 bg-agro-600 rounded-lg flex items-center justify-center text-white text-xl group-hover:rotate-12 transition-transform">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <span class="text-2xl font-bold text-agro-800 dark:text-agro-300 tracking-wide">So<span class="text-terra-500">Plantas</span></span>
+            </a>
+
+            <nav class="hidden md:flex space-x-8 font-medium text-gray-700 dark:text-gray-200">
+                <a href="#sobre" class="hover:text-agro-600 dark:hover:text-agro-400 transition">Sobre</a>
+                <a href="#servicos" class="hover:text-agro-600 dark:hover:text-agro-400 transition">Serviços</a>
+                <a href="#galeria" class="hover:text-agro-600 dark:hover:text-agro-400 transition">Galeria</a>
+                <a href="#produtos" class="hover:text-agro-600 dark:hover:text-agro-400 transition">Produtos</a>
+                <a href="#equipe" class="hover:text-agro-600 dark:hover:text-agro-400 transition">Equipa</a>
+                <a href="#localizacao" class="hover:text-agro-600 dark:hover:text-agro-400 transition">Localização</a>
+            </nav>
+
+            <div class="flex items-center">
+                <button id="theme-toggle" class="relative p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-yellow-300 transition-colors focus:outline-none overflow-hidden w-12 h-12 flex items-center justify-center shadow-inner">
+                    <i class="fas fa-sun text-xl absolute transition-all duration-500 transform scale-100 rotate-0 dark:scale-0 dark:rotate-90"></i>
+                    <i class="fas fa-moon text-xl absolute transition-all duration-500 transform scale-0 -rotate-90 dark:scale-100 dark:rotate-0"></i>
+                </button>
+                
+                <button id="mobile-menu-btn" class="md:hidden ml-4 text-gray-600 dark:text-gray-200">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col p-4 space-y-3">
+                <a href="#sobre" class="block py-2 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 rounded">Sobre</a>
+                <a href="#servicos" class="block py-2 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 rounded">Serviços</a>
+                <a href="#localizacao" class="block py-2 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 rounded">Localização</a>
+                <a href="#contato" class="block py-2 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 rounded">Contato</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="img/4.png" alt="Soplantas" class="w-full h-full object-cover opacity-40 dark:opacity-10">
+        </div>
+        <div class="container mx-auto px-6 relative z-10 text-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-agro-800 dark:text-white mb-6 animate-float">
+                Produzindo plantas para alimentar, proteger e conservar o<br> <span class="text-agro-500">Mundo</span>
+            </h1>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#contato" class="px-8 py-4 bg-agro-600 text-white rounded-full font-bold hover:bg-agro-700 transition transform hover:scale-105 shadow-lg">
+                    Solicitar Orçamento
+                </a>
+                <a href="#servicos" class="px-8 py-4 bg-white dark:bg-gray-800 text-agro-600 dark:text-agro-400 border border-agro-200 dark:border-gray-600 rounded-full font-bold hover:shadow-md transition">
+                    Nossos Serviços
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sobre a Empresa - ATUALIZADO -->
+    <section id="sobre" class="py-20 bg-white dark:bg-gray-800">
+        <div class="container mx-auto px-6">
+            <!-- Header da Secção -->
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-agro-800 dark:text-white mb-4">Sobre a Soplantas</h2>
+                <div class="w-24 h-1 bg-agro-500 mx-auto rounded"></div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-12 items-start">
+                <!-- Coluna da Imagem (Sticky) -->
+                <div class="lg:w-1/3 lg:sticky lg:top-24">
+                    <div class="relative rounded-2xl shadow-2xl overflow-hidden group">
+                        <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="Trabalho de Campo" class="w-full h-auto object-cover transform transition duration-700 group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                            <p class="text-white font-semibold italic border-l-4 border-agro-500 pl-4">"Produzir plantas para alimentar e proteger o mundo"</p>
+                        </div>
+                    </div>
+                    <!-- Stats Rápidos -->
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                         <div class="bg-agro-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-agro-500">
+                            <span class="block text-2xl font-bold text-agro-700 dark:text-white">2008</span>
+                            <span class="text-xs uppercase text-gray-500 dark:text-gray-400 font-bold">Fundação</span>
+                         </div>
+                         <div class="bg-agro-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-terra-500">
+                            <span class="block text-xl font-bold text-agro-700 dark:text-white truncate">Vila Ulónguè</span>
+                            <span class="text-xs uppercase text-gray-500 dark:text-gray-400 font-bold">Sede (Tete)</span>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Coluna de Conteúdo -->
+                <div class="lg:w-2/3 text-gray-600 dark:text-gray-300 space-y-8 text-justify leading-relaxed">
+                    
+                    <!-- Introdução -->
+                    <div class="bg-agro-50/50 dark:bg-gray-700/30 p-6 rounded-xl border border-agro-100 dark:border-gray-600">
+                        <p class="mb-4">
+                            A <b>SOCIEDADE DE PLANTAS, LIMITADA (SOPLANTAS, LDA)</b> é uma empresa de interesse privado, sediada no distrito de Angónia, Província de Tete.
+                        </p>
+                        <p>
+                            Constituída por uma equipa multidisciplinar com vasta experiência, atuamos sob a abordagem do desenvolvimento agrário local sustentável. Os nossos pilares são o combate à pobreza, a redução das desigualdades sociais e o estímulo ao empreendedorismo e inclusão social.
+                        </p>
+                    </div>
+
+                    <!-- Experiência e Parcerias (Timeline Style) -->
+                    <div>
+                        <h3 class="text-xl font-bold text-agro-800 dark:text-white mb-6 flex items-center">
+                            <span class="w-8 h-8 bg-terra-500 rounded-full flex items-center justify-center text-white mr-3 text-sm"><i class="fas fa-history"></i></span>
+                            Trajetória e Parcerias
+                        </h3>
+                        <div class="space-y-6 relative border-l-2 border-agro-200 dark:border-gray-600 ml-4 pl-8">
+                            <!-- Item 1 -->
+                            <div class="relative">
+                                <span class="absolute -left-[41px] top-1 w-6 h-6 bg-agro-500 rounded-full border-4 border-white dark:border-gray-800"></span>
+                                <h4 class="font-bold text-agro-700 dark:text-agro-300">Parceria com GPZ (Desde 2008)</h4>
+                                <p class="text-sm mt-2">Parceira incontornável do Gabinete do Plano do Zambeze em programas de reflorestamento comunitário e arborização da Vila de Ulónguè. Destaque para a iniciativa presidencial <b>“Um aluno, Uma Planta”</b> e a produção de 1 milhão de mudas.</p>
+                            </div>
+                            <!-- Item 2 -->
+                            <div class="relative">
+                                <span class="absolute -left-[41px] top-1 w-6 h-6 bg-agro-500 rounded-full border-4 border-white dark:border-gray-800"></span>
+                                <h4 class="font-bold text-agro-700 dark:text-agro-300">Hidroeléctrica de Cahora Bassa (HCB)</h4>
+                                <p class="text-sm mt-2">Fornecimento de mudas de cedro (<i>Cupressus sempervirens</i>) para a recomposição arbórea da Vila de Songo, contribuindo para a estética e ambiente urbano.</p>
+                            </div>
+                            <!-- Item 3 -->
+                            <div class="relative">
+                                <span class="absolute -left-[41px] top-1 w-6 h-6 bg-agro-500 rounded-full border-4 border-white dark:border-gray-800"></span>
+                                <h4 class="font-bold text-agro-700 dark:text-agro-300">Batata Reno (2012)</h4>
+                                <p class="text-sm mt-2">Participação no projeto de produção de sementes, fornecendo 40 toneladas de semente inicial.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Áreas de Atuação e Objetivos (Grid) -->
+                    <div class="grid md:grid-cols-2 gap-8 pt-4">
+                        <!-- Atuação -->
+                        <div>
+                            <h3 class="text-lg font-bold text-agro-800 dark:text-white mb-4 border-b-2 border-terra-500 inline-block pb-1">A Soplantas Actua</h3>
+                            <ul class="space-y-3 text-sm">
+                                <li class="flex items-start"><i class="fas fa-seedling text-agro-500 mt-1 mr-2"></i> <span>Investimentos agrários e Agroindústria</span></li>
+                                <li class="flex items-start"><i class="fas fa-seedling text-agro-500 mt-1 mr-2"></i> <span>Comércio geral e Consultoria</span></li>
+                                <li class="flex items-start"><i class="fas fa-seedling text-agro-500 mt-1 mr-2"></i> <span>Turismo e Processamento de frutas</span></li>
+                                <li class="flex items-start"><i class="fas fa-seedling text-agro-500 mt-1 mr-2"></i> <span>Maneio de viveiros e Reflorestamento</span></li>
+                                <li class="flex items-start"><i class="fas fa-seedling text-agro-500 mt-1 mr-2"></i> <span>Recuperação de áreas degradadas</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- Objetivos -->
+                        <div>
+                            <h3 class="text-lg font-bold text-agro-800 dark:text-white mb-4 border-b-2 border-terra-500 inline-block pb-1">Objetivos Específicos</h3>
+                            <ul class="space-y-3 text-sm">
+                                <li class="flex items-start"><i class="fas fa-bullseye text-terra-500 mt-1 mr-2"></i> <span>Impulsionar produção (Fome Zero)</span></li>
+                                <li class="flex items-start"><i class="fas fa-bullseye text-terra-500 mt-1 mr-2"></i> <span>Fortalecer ativos de produção</span></li>
+                                <li class="flex items-start"><i class="fas fa-bullseye text-terra-500 mt-1 mr-2"></i> <span>Gestão participativa de recursos</span></li>
+                                <li class="flex items-start"><i class="fas fa-bullseye text-terra-500 mt-1 mr-2"></i> <span>Desenvolvimento rural integrado</span></li>
+                                <li class="flex items-start"><i class="fas fa-bullseye text-terra-500 mt-1 mr-2"></i> <span>Estimular agricultura criativa</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-terra-50 dark:bg-terra-900/30 p-4 rounded-lg text-center text-sm italic text-terra-800 dark:text-terra-200 mt-4">
+                        "Voltar a servir Songo e gerir a sua arborização urbana constitui um prazer renovado para a Soplantas."
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio de Serviços -->
+    <section id="servicos" class="py-20 bg-agro-50 dark:bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-agro-500 font-bold uppercase tracking-wider text-sm">O que fazemos</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mt-2">Nossos Serviços</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Card de Serviço -->
+                <div class="service-card bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition border-b-4 border-agro-500 group">
+                    <div class="w-14 h-14 bg-agro-100 dark:bg-agro-900 rounded-full flex items-center justify-center text-agro-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-line text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 dark:text-white">Investimentos Agroflorestais</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Gestão de ativos biológicos e planeamento financeiro para florestas produtivas.</p>
+                </div>
+
+                <div class="service-card bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition border-b-4 border-terra-500 group">
+                    <div class="w-14 h-14 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center text-orange-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-flask text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 dark:text-white">Pesquisa & Desenvolvimento</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Estudos de solo, melhoramento genético e adaptação climática de espécies.</p>
+                </div>
+
+                <div class="service-card bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition border-b-4 border-agro-500 group">
+                    <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-hands-helping text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 dark:text-white">Consultoria & Assistência</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Acompanhamento técnico especializado para produtores rurais e empresas.</p>
+                </div>
+
+                <div class="service-card bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition border-b-4 border-terra-500 group">
+                    <div class="w-14 h-14 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-green-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-seedling text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 dark:text-white">Maneio de Viveiros</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Produção de mudas nativas e exóticas com alto padrão de qualidade.</p>
+                </div>
+
+                <div class="service-card bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition border-b-4 border-agro-500 group">
+                    <div class="w-14 h-14 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center text-yellow-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-apple-alt text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 dark:text-white">Produção de Frutas</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Povoamento de pomares e processamento de frutas e hortaliças.</p>
+                </div>
+
+                <div class="service-card bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-xl transition border-b-4 border-terra-500 group">
+                    <div class="w-14 h-14 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-graduation-cap text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 dark:text-white">Estágios & Formação</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">Programas educacionais práticos para estudantes de agronomia e biologia.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nova Seção: Galeria de Trabalhos Realizados -->
+    <section id="galeria" class="py-20 bg-white dark:bg-gray-800">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-agro-500 font-bold uppercase tracking-wider text-sm">Galeria</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mt-2">Trabalhos Realizados</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Exemplo de Item da Galeria -->
+                <div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/3.png" alt="bonsai de limeira" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Bonsai de limeira</h3>
+                    </div>
+                </div>
+                <div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/9.png" alt="Mangueira Sensation carregada de frutos" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Mangueira Sensation carregada de frutos</h3>
+                    </div>
+                </div>
+                <div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/10.png" alt="Pomar Frutífero" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Implementação de Pomares Frutíferos</h3>
+                    </div>
+                </div>
+                <div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/5.png" alt="Carregamento de mangas Tommy (vermelha) e Boroma (verde)" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Carregamento de mangas Tommy (vermelha) e Boroma (verde)</h3>
+                    </div>
+                </div><div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/7.png" alt="Colheita e embalagem de mangas" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Colheita e embalagem de mangas</h3>
+                    </div>
+                </div><div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/8.png" alt="Transporte da manga" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Transporte da manga</h3>
+                    </div>
+                </div><div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/11.png" alt="Estudantes da UniZambeze na aula pratica de Botânica" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Estudantes da UniZambeze na aula pratica de Botânica</h3>
+                    </div>
+                </div><div class="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                    <img src="img/4.png" alt="Cacho de uva branca" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                        <h3 class="text-white text-xl font-bold">Cacho de uva branca</h3>
+                    </div>    
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nova Seção: Produtos -->
+    <section id="produtos" class="py-20 bg-agro-50 dark:bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-agro-500 font-bold uppercase tracking-wider text-sm">Veja o que temos Disponivel pra si</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mt-2">Produtos</h2>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Produto 1 -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" alt="Mudas de Manga" class="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110">
+                        <span class="absolute top-2 right-2 bg-agro-500 text-white text-xs font-bold px-2 py-1 rounded">Promoção</span>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">Mudas de Manga</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Variedade Tommy Atkins enxertada, pronta para plantio.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-agro-600 font-bold text-xl">250 MT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produto 2 -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" alt="Mudas de Manga" class="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110">
+                        <span class="absolute top-2 right-2 bg-agro-500 text-white text-xs font-bold px-2 py-1 rounded">Promoção</span>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">Mudas de Manga</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Variedade Tommy Atkins enxertada, pronta para plantio.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-agro-600 font-bold text-xl">1250 MT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produto 3 -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1589590831510-575991f93397?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" alt="Consultoria Técnica" class="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">Kit Análise de Solo</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Coleta e análise laboratorial completa.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-agro-600 font-bold text-xl">1.500 MT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produto 4 -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1615485290382-441e4d049cb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" alt="Frutas da Época" class="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">Cesta de Frutas Bio</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Seleção semanal de frutas da época (5kg).</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-agro-600 font-bold text-xl">450 MT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Equipa e Investidores -->
+    <section id="equipe" class="py-20 bg-white dark:bg-gray-800">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-12 dark:text-white">Nossa Equipa e Investidores</h2>
+            
+            <!-- Grid Colaboradores -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+                <!-- Colaborador 1 -->
+                <div class="text-center">
+                    <div class="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-agro-200">
+                        <img src="img/Americo.jpg" alt="Team" class="w-full h-full object-cover">
+                    </div>
+                    <h4 class="font-bold text-lg dark:text-white">Prof. Eng. Américo Hilario Cantelo</h4>
+                    <p class="text-agro-600 text-sm">Director Geral da Soplantas</p>
+                </div>
+                 <!-- Colaborador 2 -->
+                 <div class="text-center">
+                    <div class="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-agro-200">
+                        <img src="img/Paula.jpg" alt="Team" class="w-full h-full object-cover">
+                    </div>
+                    <h4 class="font-bold text-lg dark:text-white">Prof. Eng. Paulina Casimiro Mpagua</h4>
+                    <p class="text-agro-600 text-sm">Diretora Comercial da Soplantas</p>
+                </div>
+                 <!-- Colaborador 3 -->
+                 <div class="text-center">
+                    <div class="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-agro-200">
+                        <img src="https://randomuser.me/api/portraits/men/85.jpg" alt="Team" class="w-full h-full object-cover">
+                    </div>
+                    <h4 class="font-bold text-lg dark:text-white">Prof. Dr. Manuel António Dina Talacuece</h4>
+                    <p class="text-agro-600 text-sm">Colaborador</p>
+                </div>
+                 <!-- Colaborador 4 -->
+                 <div class="text-center">
+                    <div class="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-agro-200">
+                        <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Team" class="w-full h-full object-cover">
+                    </div>
+                    <h4 class="font-bold text-lg dark:text-white">Prof. Dr. Eng.  Baltazar Chipiringo</h4>
+                    <p class="text-agro-600 text-sm">Colaborador</p>
+                </div>
+                <!-- Colaborador 5 -->
+                 <div class="text-center">
+                    <div class="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-agro-200">
+                        <img src="img/Vandole.jpg" alt="Team" class="w-full h-full object-cover">
+                    </div>
+                    <h4 class="font-bold text-lg dark:text-white">Eng.  Vandole M. M. Cantelo</h4>
+                    <p class="text-agro-600 text-sm">Colaborador</p>
+                </div>
+            </div>
+
+            <div class="mt-20 border-t border-gray-200 dark:border-gray-700 pt-16">
+                <div class="text-center mb-12">
+                    <span class="text-agro-500 font-bold uppercase tracking-wider text-sm">Rede de Colaboração</span>
+                    <h3 class="text-2xl md:text-3xl font-bold text-agro-800 dark:text-white mt-2">Principais Parceiros da Soplantas</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Parceiro 1 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-agro-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-agro-100 dark:bg-agro-900 rounded-full flex items-center justify-center text-agro-600 shrink-0">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">Conselhos Municipais</h4>
+                                <p class="text-xs text-agro-500 font-semibold mb-2">Ulónguè e Moatize</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Fornecimento de mudas para arborização urbana e paisagismo.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parceiro 2 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-terra-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-terra-100 dark:bg-terra-900 rounded-full flex items-center justify-center text-terra-600 shrink-0">
+                                <i class="fas fa-school"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">Escolas Públicas</h4>
+                                <p class="text-xs text-terra-500 font-semibold mb-2">Iniciativa Presidencial</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Implementação do projeto "Um aluno, uma Planta" para educação ambiental.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parceiro 3 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-agro-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 shrink-0">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">Universidade Zambeze (FCA)</h4>
+                                <p class="text-xs text-blue-500 font-semibold mb-2">Educação Superior</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Campo para práticas supervisionadas e estágio dos estudantes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parceiro 4 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-red-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center text-red-600 shrink-0">
+                                <i class="fas fa-industry"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">Rio Tinto (ICVL)</h4>
+                                <p class="text-xs text-red-500 font-semibold mb-2">Mineração e Comunidade</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Prestação de serviços e assistência técnica às comunidades de Mualaze e Benga.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parceiro 5 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-green-600 shrink-0">
+                                <i class="fas fa-hand-holding-heart"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">Total LandCare (TLC)</h4>
+                                <p class="text-xs text-green-500 font-semibold mb-2">ONG Internacional</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Mudas e assistência técnica para empoderamento económico e nutricional.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parceiro 6 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-yellow-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center text-yellow-600 shrink-0">
+                                <i class="fas fa-tractor"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">IIAM</h4>
+                                <p class="text-xs text-yellow-500 font-semibold mb-2">Investigação Agrária</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Parceria em mecanização agrária tratorizada (Programa APPSA-MEC).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parceiro 7 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-purple-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center text-purple-600 shrink-0">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">Agrodealers & Windo</h4>
+                                <p class="text-xs text-purple-500 font-semibold mb-2">Setor Privado</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Sikhadza Khoka e Windo Empreendimentos: Serviços agrícolas e insumos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parceiro 8 -->
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-md border-l-4 border-gray-500 hover:shadow-lg transition">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-600 shrink-0">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 dark:text-white">Instituições Gerais</h4>
+                                <p class="text-xs text-gray-500 font-semibold mb-2">Públicas, Privadas e ONGs</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Diversas colaborações para o desenvolvimento agrário e social.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mapa Interativo -->
+    <section id="localizacao" class="py-20 bg-agro-50 dark:bg-gray-900 relative">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-4 dark:text-white">Encontre-nos</h2>
+            
+            <div class="relative shadow-2xl rounded-xl overflow-hidden border-4 border-white dark:border-gray-700 h-[500px] group">
+                <div id="map" class="w-full h-full z-10"></div>
+                
+                <button id="btn-gps" class="absolute bottom-6 right-6 z-[400] bg-agro-600 text-white font-bold py-3 px-6 rounded-full shadow-lg shadow-green-500/40 hover:bg-agro-700 hover:scale-105 transition duration-300 flex items-center gap-2">
+                    <i id="icon-gps" class="fas fa-location-arrow"></i>
+                    <span id="text-gps">Ir para a Fazenda</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contatos -->
+    <section id="contato" class="py-20 bg-terra-800 text-white">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row gap-12">
+                <div class="md:w-1/2">
+                    <h2 class="text-3xl font-bold mb-6">Entre em Contacto</h2>
+                    <p class="mb-8 text-terra-200">Tem dúvidas sobre nossos serviços ou quer iniciar um projeto de reflorestamento? Estamos prontos para ajudar.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-terra-500 rounded-full flex items-center justify-center"><i class="fas fa-map-marker-alt"></i></div>
+                            <span>Vila Ulónguè, Distrito de Angónia, Província de Tete</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-terra-500 rounded-full flex items-center justify-center"><i class="fas fa-phone"></i></div>
+                            <span>+258 84 897 4038</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-terra-500 rounded-full flex items-center justify-center"><i class="fas fa-envelope"></i></div>
+                            <span>contato@soplantas.co.mz</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="md:w-1/2 bg-white text-gray-800 p-8 rounded-2xl shadow-lg">
+                    <form onsubmit="event.preventDefault(); alert('Mensagem enviada com sucesso!');">
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">Nome</label>
+                            <input type="text" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-agro-500" placeholder="Seu nome">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">Email</label>
+                            <input type="email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-agro-500" placeholder="seu@email.com">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">Mensagem</label>
+                            <textarea class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-agro-500 h-32" placeholder="Como podemos ajudar?"></textarea>
+                        </div>
+                        <button class="w-full bg-agro-600 text-white font-bold py-3 rounded-lg hover:bg-agro-700 transition">Enviar Mensagem</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-8 text-center">
+        <div class="container mx-auto px-6">
+            <p>&copy; 2025 Soplantas, Lda. Todos os direitos reservados.</p>
+            <div class="flex justify-center gap-4 mt-4">
+                <a href="#" class="hover:text-white transition"><i class="fab fa-facebook"></i></a>
+                <a href="https://wa.link/21ybkf" class="hover:text-white transition"><i class="fab fa-whatsapp"></i></a>
+                <a href="#" class="hover:text-white transition"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="js/script.js" defer></script>
+</body>
+</html>
